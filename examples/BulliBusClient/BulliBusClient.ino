@@ -25,9 +25,9 @@ void handleIndicator( Cargo &cargo ) {
 
 	String message( cargo.payload );
 
-	if( value == "on" ) digitalWrite( LED, true );
-	else if( value == "off" ) digitalWrite( LED, false );
-	else if( value == "tog" ) digitalWrite( LED, !digitalRead( LED ) );
+	if( message == "on" ) digitalWrite( LED, true );
+	else if( message == "off" ) digitalWrite( LED, false );
+	else if( message == "tog" ) digitalWrite( LED, !digitalRead( LED ) );
 }
 
 void setup() {

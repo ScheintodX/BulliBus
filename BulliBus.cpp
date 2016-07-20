@@ -8,6 +8,14 @@
 #define _CRC_ '~'
 #define _NL_ '\n'
 
+#ifdef DEBUG
+	#define ERR( msg ) Serial.println( "[[[" msg "]]]" )
+#else 
+	#define ERR( msg )
+#endif
+
+static const char EMPTY[] = "";
+
 inline
 char_t _i2c( char_t val ) {
 	if( val <= 9 ) return '0' + val;
@@ -105,8 +113,8 @@ void BulliBus::onError( void (*cb_error)( const char *, Cargo& ) ) {
 BulliBus::Args::Args( Cargo &cargo ) {
 
 	if( cargo.payload == NULL ) {
-		argv[ 0 ] = 0;
-		argc = 0;
+		argv[ 0 ] = EMPTY;
+		length = 0;
 		return;
 	}
 
@@ -134,8 +142,36 @@ BulliBus::Args::Args( Cargo &cargo ) {
 		if( c == BB_MAX_ARGS ) break;
 	}
 
-	argc = c;
+	length = c;
 }
+
+const char * BulliBus::Args::operator[]( int index ) {
+
+	if( index >= length ) return EMPTY;
+
+	return argv[ index ];
+}
+double BulliBus::Args::asFloat( int index ) {
+
+	if( index >= length ) return 0;
+
+	return strtod( argv[ index ], NULL );
+}
+long BulliBus::Args::asInt( int index ) {
+
+	if( index >= length ) return 0;
+
+	return atoi( argv[ index ] );
+}
+
+/*
+BulliBus::Arg::Arg( const char * arg ) {
+	this.arg = arg;
+}
+BulliBus::Arg::operator long() {
+	return 
+}
+*/
 
 // === Cargo ===
 
@@ -145,7 +181,7 @@ Cargo::Cargo( Bulli &bus, bb_addr_t address, char *payload )
 	this->address = address;
 	this->payload = payload;
 }
-Cargo::Cargo( Bulli &bus, bb_addr_t address )
+Cargo::Cargo( Error, Bulli &bus, bb_addr_t address )
  : bus( bus ) {
 	this->ok = false;
 	this->address = address;
@@ -247,12 +283,11 @@ void Bulli::run() {
 	//_trySend(); // not needed because we block sending
 	_tryReceive();
 
-	//Serial.print( "." );
 	// notify driver of failed request
 	if( driver && driver->lastCall && driver->reservedUntil < millis() ) {
-		Cargo cargo = Cargo( *this, driver->lastCall );
+		Cargo cargo = Cargo( ERROR, *this, driver->lastCall );
 		driver->callback( cargo );
-		Serial.println( "err" );
+		ERR( "err" );
 		driver->release();
 	}
 }
@@ -331,6 +366,13 @@ void Bulli::_processIn( Buffer buffer ) {
 	buffer.clear();
 	// from this point we can start receiving again
 	
+	#ifdef DEBUG
+		buf[ BB_BUFFER_SIZE ] = '\0';
+		Serial.print( "===" );
+		Serial.print( buf );
+		Serial.println( "===" );
+	#endif
+	
 	if( len > 3 ) {
 
 		char type = len > 4 ? buf[ 4 ] : _REQ_;
@@ -369,7 +411,7 @@ void Bulli::_processIn( Buffer buffer ) {
 			}
 
 			// request
-			if( type == ' ' ) {
+			if( type == _REQ_ ) {
 
 				Passenger *p = passenger;
 				for( ; p != NULL; p = p->next ) {
@@ -389,7 +431,6 @@ void Bulli::_processIn( Buffer buffer ) {
 
 					driver->callback( cargo );
 					driver->release();
-					Serial.println( "ok" );
 				}
 
 			}
@@ -420,7 +461,7 @@ void Bulli::_tryReceive() {
 		}
 
 		if( (ch > 0x7E) || (ch < 0x20) ) { // every unknown character resets
-			printf( "RESET" );
+			printf( "RESET:%02x/%c", ch, ch );
 			in.clear();
 			continue;
 		}
@@ -468,7 +509,6 @@ void Driver::reserve( int ms ) {
 void Driver::release() {
 	lastCall = NULL;
 	reserve( 0 );
-	Serial.println( "release" );
 }
 
 

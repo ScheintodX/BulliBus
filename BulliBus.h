@@ -66,6 +66,8 @@ class Driver;
 class Passenger;
 class Cargo;
 
+enum Error{ ERROR };
+
 typedef const char * bb_addr_t;
 typedef void (*bb_callback_t)( Cargo &cargo );
 
@@ -98,22 +100,42 @@ namespace BulliBus {
 	static void onError( void (*cb_error)( const char *msg, Cargo& cargo ) );
 
 	/**
-	 * Helper for parsing args.
+	 * Helpers for parsing args.
 	 *
 	 * This although supports quotes like in: 'tell herman "I'm home"'
 	 *
 	 * See example "BulliBusPayloadParsing.ino"
 	 */
+
+/*
+	class Arg {
+
+		private:
+			const char * arg;
+			Arg( const char * arg );
+
+		public :
+			operator long();
+			operator double();
+			operator const char *();
+	};
+*/
+
 	class Args {
 
-		char buffer[ BB_BUFFER_SIZE ];
+		private:
+			char buffer[ BB_BUFFER_SIZE ];
+			const char * argv[ BB_MAX_ARGS ];
 
 		public:
 			Args( Cargo &cargo );
-			int argc;
-			char * argv[ BB_MAX_ARGS ];
+			int length;
+			const char * operator[]( int index );
+			long asInt( int index );
+			double asFloat( int index );
 
 	};
+
 };
 
 /**
@@ -143,7 +165,7 @@ class Cargo {
 		Bulli &bus;
 
 		Cargo( Bulli &bus, bb_addr_t address, char *payload );
-		Cargo( Bulli &bus, bb_addr_t address );
+		Cargo( Error, Bulli &bus, bb_addr_t address );
 
 	public:
 
@@ -156,7 +178,6 @@ class Cargo {
 
 		template<typename T>
 		void reply( T value );
-
 };
 
 

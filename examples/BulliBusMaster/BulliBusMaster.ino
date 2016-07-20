@@ -51,15 +51,18 @@ void setup() {
 
 void loop() {
 
-	digitalWrite( RED, true );
+	analogWrite( RED, 5 ); // dimm
 	driver.request( "tmp1", "get", onTmp1 );
 
-	digitalWrite( GRN, true );
+	analogWrite( GRN, 5 );
 	driver.request( "tmp2", "get", onTmp2 );
 
-	digitalWrite( BLU, true );
+	analogWrite( BLU, 5 );
 	driver.request( "tmp3", "get", onTmp3 );
+
+	driver.tell( "ind1", "tog" );
 
 	// this delays loop but still handls bus messages
 	bus.run();
 }
+

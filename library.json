@@ -1,7 +1,7 @@
 {
 	"name": "BulliBus",
-	"keywords": "serial, bus, rs485, rs232, communication, uart, usart",
 	"description": "Easy to use serial communication library using UART",
+	"keywords": "serial, bus, rs485, rs232, communication, uart, usart",
 	"authors": {
 		"name": "Florian Bantner",
 		"url": "https://www.github.com/ScheintodX"
